@@ -1,5 +1,5 @@
 -- KYDIABROSO Script Hub | Build A Boat For Treasure
--- Version: 2.1 | GitHub Edition
+-- Version: 2.2 | GitHub Edition | Full Working
 -- Optimized for loadstring hosting
 
 local Players = game:GetService("Players")
@@ -26,7 +26,7 @@ local KState = {
 	FlySpeed = 100,
 	WalkSpeed = 50,
 	JumpPower = 50,
-	CoinFarmDelay = 0.5,
+	CoinFarmDelay = 5,
 }
 
 -- Utility Functions
@@ -38,7 +38,7 @@ local function GetCharacter()
 	return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 end
 
-local function GetHumanoid()
+local function GetHumanoidAndHRP()
 	local char = GetCharacter()
 	return char:WaitForChild("Humanoid"), char:WaitForChild("HumanoidRootPart")
 end
@@ -150,7 +150,6 @@ TabContent.ZIndex = 5
 TabContent.Parent = MainFrame
 
 local Tabs = {}
-local ActiveConnections = {}
 
 -- Tab Creator
 local function CreateTab(name, icon)
@@ -433,16 +432,18 @@ CreateButton(TransTab, "Телепорт на старт", function()
 	pcall(function()
 		local spawnLoc = Workspace:FindFirstChild("SpawnLocation") or Workspace:FindFirstChild("Start")
 		if spawnLoc and spawnLoc:IsA("BasePart") then
-			GetHumanoid().CFrame = spawnLoc.CFrame + Vector3.new(0, 5, 0)
+			local _, hrp = GetHumanoidAndHRP()
+			hrp.CFrame = spawnLoc.CFrame + Vector3.new(0, 5, 0)
 		end
 	end)
 end)
 CreateButton(TransTab, "Телепорт к финишу", function()
 	pcall(function()
+		local _, hrp = GetHumanoidAndHRP()
 		for _, obj in pairs(Workspace:GetDescendants()) do
 			if obj.Name:lower():find("treasure") or obj.Name:lower():find("chest") or obj.Name:lower():find("endzone") then
 				if obj:IsA("BasePart") then
-					GetHumanoid().CFrame = obj.CFrame + Vector3.new(0, 5, 0)
+					hrp.CFrame = obj.CFrame + Vector3.new(0, 5, 0)
 					break
 				end
 			end
@@ -463,7 +464,7 @@ end)
 local Info = Instance.new("TextLabel")
 Info.Size = UDim2.new(1, -10, 0, 90)
 Info.BackgroundTransparency = 1
-Info.Text = "KYDIABROSO v2.1\nBuild A Boat For Treasure\nGitHub Edition\nУправление полетом: W/A/S/D | Space | LShift"
+Info.Text = "KYDIABROSO v2.2\nBuild A Boat For Treasure\nGitHub Edition\nУправление полетом: W/A/S/D | Space | LShift"
 Info.TextColor3 = Color3.fromRGB(140, 140, 160)
 Info.TextSize = 12
 Info.Font = Enum.Font.Gotham
@@ -491,7 +492,7 @@ local function StartFly()
 	if FlyBV then FlyBV:Destroy() end
 	if FlyBG then FlyBG:Destroy() end
 
-	local hrp = select(2, GetHumanoid())
+	local _, hrp = GetHumanoidAndHRP()
 	FlyBV = Instance.new("BodyVelocity")
 	FlyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
 	FlyBV.Velocity = Vector3.zero
@@ -556,7 +557,7 @@ task.spawn(function()
 					if not KState.AutoFarmCoins then break end
 					if obj.Name:lower():find("coin") or obj.Name:lower():find("gold") then
 						if obj:IsA("BasePart") and obj:FindFirstChild("TouchInterest") then
-							local hrp = select(2, GetHumanoid())
+							local _, hrp = GetHumanoidAndHRP()
 							firetouchinterest(hrp, obj, 0)
 							firetouchinterest(hrp, obj, 1)
 							task.wait(KState.CoinFarmDelay / 10)
@@ -574,11 +575,12 @@ task.spawn(function()
 	while true do
 		if KState.AutoFarmXP then
 			pcall(function()
+				local _, hrp = GetHumanoidAndHRP()
 				for _, obj in pairs(Workspace:GetDescendants()) do
 					if not KState.AutoFarmXP then break end
 					if obj.Name:lower():find("xp") or obj.Name:lower():find("exp") then
 						if obj:IsA("BasePart") then
-							GetHumanoid().CFrame = obj.CFrame
+							hrp.CFrame = obj.CFrame
 							task.wait(0.3)
 						end
 					end
@@ -598,7 +600,7 @@ task.spawn(function()
 					if not KState.AutoCollectResources then break end
 					if obj.Name:lower():find("wood") or obj.Name:lower():find("stone") or obj.Name:lower():find("block") then
 						if obj:IsA("BasePart") and obj:FindFirstChild("TouchInterest") then
-							local hrp = select(2, GetHumanoid())
+							local _, hrp = GetHumanoidAndHRP()
 							firetouchinterest(hrp, obj, 0)
 							firetouchinterest(hrp, obj, 1)
 							task.wait(0.2)
@@ -661,4 +663,58 @@ task.spawn(function()
 	while ScreenGui and ScreenGui.Parent do
 		if KState.Fly and not FlyConn then StartFly() end
 		if not KState.Fly and FlyConn then StopFly() end
-		if KState.Noclip
+		if KState.Noclip and not NoclipConn then StartNoclip() end
+		if not KState.Noclip and NoclipConn then StopNoclip() end
+
+		local hum = select(1, GetHumanoidAndHRP())
+		if KState.Speed then
+			hum.WalkSpeed = KState.WalkSpeed
+		else
+			hum.WalkSpeed = 16
+		end
+		hum.JumpPower = KState.JumpPower
+
+		task.wait(0.3)
+	end
+end)
+
+-- Character respawn handler
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(1)
+	if KState.Fly then StartFly() end
+	if KState.Noclip then StartNoclip() end
+end)
+
+-- Drag UI
+local drag, dragStart, startPos = false, nil, nil
+
+Title.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		drag = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		drag = false
+	end
+end)
+
+-- Open animation
+MainFrame.Size = UDim2.new(0, 0, 0, 0)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+	Size = UDim2.new(0, 520, 0, 360),
+	Position = UDim2.new(0.5, -260, 0.5, -180)
+}):Play()
+
+print("[KYDIABROSO] Loaded successfully | GitHub Edition v2.2")
