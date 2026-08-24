@@ -1,6 +1,10 @@
--- KYDIABROSO Script Hub | Build A Boat For Treasure
--- Version: 2.2 | GitHub Edition | Full Working
--- Optimized for loadstring hosting
+--[[
+    ╔══════════════════════════════════════════════════════════════════╗
+    ║              KYDIABROSO v3.0 | ULTIMATE BBFT HUB               ║
+    ║          Build A Boat For Treasure — Premium Script            ║
+    ║  Features: AutoBuild, Steal Build, Inf Blocks, AutoFarm, Fly   ║
+    ╚══════════════════════════════════════════════════════════════════╝
+]]
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,11 +13,13 @@ local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
--- State Manager
+--// State Manager
 local KState = {
 	AutoFarmCoins = false,
 	AutoFarmXP = false,
@@ -23,96 +29,118 @@ local KState = {
 	Fly = false,
 	Speed = false,
 	Noclip = false,
+	DeleteWater = false,
+	AutoWeld = false,
+	FastPlace = false,
+	AutoBuild = false,
+	StealBuild = false,
+	AntiAFK = false,
 	FlySpeed = 100,
 	WalkSpeed = 50,
 	JumpPower = 50,
 	CoinFarmDelay = 5,
+	BuildTemplate = "Jet",
 }
 
--- Utility Functions
-local function SafeGUID()
-	return HttpService:GenerateGUID(false):sub(1, 8)
-end
+--// Utility
+local function GUID() return HttpService:GenerateGUID(false):sub(1, 8) end
 
-local function GetCharacter()
+local function GetChar()
 	return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 end
 
-local function GetHumanoidAndHRP()
-	local char = GetCharacter()
-	return char:WaitForChild("Humanoid"), char:WaitForChild("HumanoidRootPart")
+local function GetHum()
+	local c = GetChar()
+	return c:WaitForChild("Humanoid"), c:WaitForChild("HumanoidRootPart")
 end
 
--- GUI Creation
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "KYDIABROSO_" .. SafeGUID()
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = CoreGui
+--// Anti-AFK
+local VirtualUser = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+	if KState.AntiAFK then
+		VirtualUser:CaptureController()
+		VirtualUser:ClickButton2(Vector2.new())
+	end
+end)
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "Main"
-MainFrame.Size = UDim2.new(0, 520, 0, 360)
-MainFrame.Position = UDim2.new(0.5, -260, 0.5, -180)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 30)
-MainFrame.BackgroundTransparency = 0.1
-MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
-MainFrame.Parent = ScreenGui
+--// GUI
+local SG = Instance.new("ScreenGui")
+SG.Name = "KYDIABROSO_" .. GUID()
+SG.ResetOnSpawn = false
+SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+SG.Parent = CoreGui
 
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 540, 0, 400)
+Main.Position = UDim2.new(0.5, -270, 0.5, -200)
+Main.BackgroundColor3 = Color3.fromRGB(12, 12, 28)
+Main.BackgroundTransparency = 0.08
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Main.Parent = SG
 
-local Gradient = Instance.new("UIGradient")
-Gradient.Color = ColorSequence.new({
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 16)
+
+local Grad = Instance.new("UIGradient")
+Grad.Color = ColorSequence.new({
 	ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 212, 255)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(123, 47, 252))
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(123, 47, 252)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 128))
 })
-Gradient.Transparency = NumberSequence.new(0.93, 0.93)
-Gradient.Rotation = 135
-Gradient.Parent = MainFrame
+Grad.Transparency = NumberSequence.new(0.94, 0.94)
+Grad.Rotation = 45
+Grad.Parent = Main
 
-local Stroke = Instance.new("UIStroke")
-Stroke.Color = Color3.fromRGB(0, 212, 255)
-Stroke.Thickness = 1.2
-Stroke.Transparency = 0.5
-Stroke.Parent = MainFrame
+local Str = Instance.new("UIStroke")
+Str.Color = Color3.fromRGB(0, 212, 255)
+Str.Thickness = 1.5
+Str.Transparency = 0.4
+Str.Parent = Main
 
--- Glass overlay
 local Glass = Instance.new("Frame")
 Glass.Size = UDim2.new(1, 0, 1, 0)
+Glass.BackgroundTransparency = 0.92
 Glass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Glass.BackgroundTransparency = 0.94
-Glass.BorderSizePixel = 0
 Glass.ZIndex = 2
-Glass.Parent = MainFrame
-Instance.new("UICorner", Glass).CornerRadius = UDim.new(0, 14)
+Glass.Parent = Main
+Instance.new("UICorner", Glass).CornerRadius = UDim.new(0, 16)
 
 -- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 42)
+Title.Size = UDim2.new(1, 0, 0, 44)
 Title.Position = UDim2.new(0, 0, 0, 6)
 Title.BackgroundTransparency = 1
 Title.Text = "KYDIABROSO"
 Title.TextColor3 = Color3.fromRGB(0, 212, 255)
-Title.TextSize = 26
+Title.TextSize = 28
 Title.Font = Enum.Font.GothamBold
 Title.ZIndex = 5
-Title.Parent = MainFrame
+Title.Parent = Main
 
--- Glow effect
 local Glow = Instance.new("TextLabel")
 Glow.Size = Title.Size
-Glow.Position = Title.Position + UDim2.new(0, 0, 0, 1)
+Glow.Position = Title.Position + UDim2.new(0, 0, 0, 2)
 Glow.BackgroundTransparency = 1
 Glow.Text = "KYDIABROSO"
 Glow.TextColor3 = Color3.fromRGB(123, 47, 252)
-Glow.TextSize = 26
+Glow.TextSize = 28
 Glow.Font = Enum.Font.GothamBold
-Glow.TextTransparency = 0.75
+Glow.TextTransparency = 0.7
 Glow.ZIndex = 4
-Glow.Parent = MainFrame
+Glow.Parent = Main
 
--- Close button
+local Ver = Instance.new("TextLabel")
+Ver.Size = UDim2.new(0, 60, 0, 16)
+Ver.Position = UDim2.new(1, -70, 0, 8)
+Ver.BackgroundTransparency = 1
+Ver.Text = "v3.0"
+Ver.TextColor3 = Color3.fromRGB(0, 212, 255)
+Ver.TextSize = 12
+Ver.Font = Enum.Font.Gotham
+Ver.ZIndex = 5
+Ver.Parent = Main
+
+-- Close
 local Close = Instance.new("TextButton")
 Close.Size = UDim2.new(0, 32, 0, 32)
 Close.Position = UDim2.new(1, -38, 0, 6)
@@ -122,48 +150,64 @@ Close.TextColor3 = Color3.fromRGB(255, 80, 80)
 Close.TextSize = 24
 Close.Font = Enum.Font.GothamBold
 Close.ZIndex = 6
-Close.Parent = MainFrame
+Close.Parent = Main
+Close.MouseButton1Click:Connect(function() SG:Destroy() end)
 
-Close.MouseButton1Click:Connect(function()
-	ScreenGui:Destroy()
+-- Minimize
+local Min = Instance.new("TextButton")
+Min.Size = UDim2.new(0, 32, 0, 32)
+Min.Position = UDim2.new(1, -72, 0, 6)
+Min.BackgroundTransparency = 1
+Min.Text = "−"
+Min.TextColor3 = Color3.fromRGB(200, 200, 200)
+Min.TextSize = 24
+Min.Font = Enum.Font.GothamBold
+Min.ZIndex = 6
+Min.Parent = Main
+
+local Minimized = false
+Min.MouseButton1Click:Connect(function()
+	Minimized = not Minimized
+	TweenService:Create(Main, TweenInfo.new(0.3), {
+		Size = Minimized and UDim2.new(0, 540, 0, 44) or UDim2.new(0, 540, 0, 400)
+	}):Play()
 end)
 
--- Tab System
-local TabButtons = Instance.new("Frame")
-TabButtons.Size = UDim2.new(1, -20, 0, 36)
-TabButtons.Position = UDim2.new(0, 10, 0, 48)
-TabButtons.BackgroundTransparency = 1
-TabButtons.ZIndex = 5
-TabButtons.Parent = MainFrame
+-- Tabs
+local TabBtns = Instance.new("Frame")
+TabBtns.Size = UDim2.new(1, -20, 0, 36)
+TabBtns.Position = UDim2.new(0, 10, 0, 48)
+TabBtns.BackgroundTransparency = 1
+TabBtns.ZIndex = 5
+TabBtns.Parent = Main
 
-local TabBtnLayout = Instance.new("UIListLayout")
-TabBtnLayout.FillDirection = Enum.FillDirection.Horizontal
-TabBtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabBtnLayout.Padding = UDim.new(0, 8)
-TabBtnLayout.Parent = TabButtons
+local TabLay = Instance.new("UIListLayout")
+TabLay.FillDirection = Enum.FillDirection.Horizontal
+TabLay.HorizontalAlignment = Enum.HorizontalAlignment.Center
+TabLay.Padding = UDim.new(0, 6)
+TabLay.Parent = TabBtns
 
-local TabContent = Instance.new("Frame")
-TabContent.Size = UDim2.new(1, -20, 1, -94)
-TabContent.Position = UDim2.new(0, 10, 0, 88)
-TabContent.BackgroundTransparency = 1
-TabContent.ZIndex = 5
-TabContent.Parent = MainFrame
+local TabCont = Instance.new("Frame")
+TabCont.Size = UDim2.new(1, -20, 1, -96)
+TabCont.Position = UDim2.new(0, 10, 0, 88)
+TabCont.BackgroundTransparency = 1
+TabCont.ZIndex = 5
+TabCont.Parent = Main
 
 local Tabs = {}
 
--- Tab Creator
 local function CreateTab(name, icon)
 	local Btn = Instance.new("TextButton")
-	Btn.Size = UDim2.new(0, 108, 1, 0)
-	Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 55)
+	Btn.Size = UDim2.new(0, 96, 1, 0)
+	Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
 	Btn.BackgroundTransparency = 0.3
 	Btn.Text = icon .. " " .. name
-	Btn.TextColor3 = Color3.fromRGB(180, 180, 180)
-	Btn.TextSize = 12
+	Btn.TextColor3 = Color3.fromRGB(170, 170, 170)
+	Btn.TextSize = 11
 	Btn.Font = Enum.Font.GothamSemibold
 	Btn.BorderSizePixel = 0
 	Btn.ZIndex = 6
-	Btn.Parent = TabButtons
+	Btn.Parent = TabBtns
 	Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
 
 	local Frame = Instance.new("ScrollingFrame")
@@ -175,7 +219,7 @@ local function CreateTab(name, icon)
 	Frame.ScrollBarImageColor3 = Color3.fromRGB(0, 212, 255)
 	Frame.Visible = false
 	Frame.ZIndex = 5
-	Frame.Parent = TabContent
+	Frame.Parent = TabCont
 
 	local List = Instance.new("UIListLayout")
 	List.Padding = UDim.new(0, 8)
@@ -186,8 +230,8 @@ local function CreateTab(name, icon)
 	Btn.MouseButton1Click:Connect(function()
 		for _, t in pairs(Tabs) do
 			t.Frame.Visible = false
-			t.Button.BackgroundColor3 = Color3.fromRGB(30, 30, 55)
-			t.Button.TextColor3 = Color3.fromRGB(180, 180, 180)
+			t.Button.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
+			t.Button.TextColor3 = Color3.fromRGB(170, 170, 170)
 		end
 		Frame.Visible = true
 		Btn.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
@@ -197,82 +241,20 @@ local function CreateTab(name, icon)
 	return Frame
 end
 
--- Toggle Creator
+-- Toggle
 local function CreateToggle(parent, text, key)
 	local Frame = Instance.new("Frame")
 	Frame.Size = UDim2.new(1, -10, 0, 42)
-	Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 40)
-	Frame.BackgroundTransparency = 0.35
+	Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+	Frame.BackgroundTransparency = 0.3
 	Frame.BorderSizePixel = 0
 	Frame.ZIndex = 6
 	Frame.Parent = parent
 	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
 
 	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(0.65, 0, 1, 0)
+	Label.Size = UDim2.new(0.6, 0, 1, 0)
 	Label.Position = UDim2.new(0, 12, 0, 0)
-	Label.BackgroundTransparency = 1
-	Label.Text = text
-	Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-	Label.TextSize = 14
-	Label.Font = Enum.Font.Gotham
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-	Label.ZIndex = 7
-	Label.Parent = Frame
-
-	local ToggleBg = Instance.new("TextButton")
-	ToggleBg.Size = UDim2.new(0, 46, 0, 24)
-	ToggleBg.Position = UDim2.new(1, -56, 0.5, -12)
-	ToggleBg.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
-	ToggleBg.BorderSizePixel = 0
-	ToggleBg.Text = ""
-	ToggleBg.ZIndex = 7
-	ToggleBg.Parent = Frame
-	Instance.new("UICorner", ToggleBg).CornerRadius = UDim.new(1, 0)
-
-	local Circle = Instance.new("Frame")
-	Circle.Size = UDim2.new(0, 20, 0, 20)
-	Circle.Position = UDim2.new(0, 2, 0.5, -10)
-	Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	Circle.BorderSizePixel = 0
-	Circle.ZIndex = 8
-	Circle.Parent = ToggleBg
-	Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
-
-	local isOn = KState[key]
-
-	local function Update()
-		if isOn then
-			TweenService:Create(ToggleBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 212, 255)}):Play()
-			TweenService:Create(Circle, TweenInfo.new(0.2), {Position = UDim2.new(1, -22, 0.5, -10)}):Play()
-		else
-			TweenService:Create(ToggleBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(55, 55, 75)}):Play()
-			TweenService:Create(Circle, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -10)}):Play()
-		end
-		KState[key] = isOn
-	end
-
-	Update()
-	ToggleBg.MouseButton1Click:Connect(function()
-		isOn = not isOn
-		Update()
-	end)
-end
-
--- Slider Creator
-local function CreateSlider(parent, text, min, max, default, key, suffix)
-	local Frame = Instance.new("Frame")
-	Frame.Size = UDim2.new(1, -10, 0, 58)
-	Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 40)
-	Frame.BackgroundTransparency = 0.35
-	Frame.BorderSizePixel = 0
-	Frame.ZIndex = 6
-	Frame.Parent = parent
-	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
-
-	local Label = Instance.new("TextLabel")
-	Label.Size = UDim2.new(0.5, 0, 0, 22)
-	Label.Position = UDim2.new(0, 12, 0, 4)
 	Label.BackgroundTransparency = 1
 	Label.Text = text
 	Label.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -282,79 +264,141 @@ local function CreateSlider(parent, text, min, max, default, key, suffix)
 	Label.ZIndex = 7
 	Label.Parent = Frame
 
-	local ValueLbl = Instance.new("TextLabel")
-	ValueLbl.Size = UDim2.new(0.3, 0, 0, 22)
-	ValueLbl.Position = UDim2.new(0.7, -10, 0, 4)
-	ValueLbl.BackgroundTransparency = 1
-	ValueLbl.Text = tostring(default) .. (suffix or "")
-	ValueLbl.TextColor3 = Color3.fromRGB(0, 212, 255)
-	ValueLbl.TextSize = 13
-	ValueLbl.Font = Enum.Font.GothamBold
-	ValueLbl.TextXAlignment = Enum.TextXAlignment.Right
-	ValueLbl.ZIndex = 7
-	ValueLbl.Parent = Frame
+	local TBg = Instance.new("TextButton")
+	TBg.Size = UDim2.new(0, 46, 0, 24)
+	TBg.Position = UDim2.new(1, -56, 0.5, -12)
+	TBg.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+	TBg.BorderSizePixel = 0
+	TBg.Text = ""
+	TBg.ZIndex = 7
+	TBg.Parent = Frame
+	Instance.new("UICorner", TBg).CornerRadius = UDim.new(1, 0)
 
-	local SliderBg = Instance.new("Frame")
-	SliderBg.Size = UDim2.new(1, -24, 0, 6)
-	SliderBg.Position = UDim2.new(0, 12, 0, 38)
-	SliderBg.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
-	SliderBg.BorderSizePixel = 0
-	SliderBg.ZIndex = 7
-	SliderBg.Parent = Frame
-	Instance.new("UICorner", SliderBg).CornerRadius = UDim.new(1, 0)
+	local Cir = Instance.new("Frame")
+	Cir.Size = UDim2.new(0, 20, 0, 20)
+	Cir.Position = UDim2.new(0, 2, 0.5, -10)
+	Cir.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	Cir.BorderSizePixel = 0
+	Cir.ZIndex = 8
+	Cir.Parent = TBg
+	Instance.new("UICorner", Cir).CornerRadius = UDim.new(1, 0)
+
+	local isOn = KState[key]
+
+	local function Upd()
+		if isOn then
+			TweenService:Create(TBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 212, 255)}):Play()
+			TweenService:Create(Cir, TweenInfo.new(0.2), {Position = UDim2.new(1, -22, 0.5, -10)}):Play()
+		else
+			TweenService:Create(TBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 70)}):Play()
+			TweenService:Create(Cir, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -10)}):Play()
+		end
+		KState[key] = isOn
+	end
+
+	Upd()
+	TBg.MouseButton1Click:Connect(function()
+		isOn = not isOn
+		Upd()
+	end)
+end
+
+-- Slider
+local function CreateSlider(parent, text, min, max, default, key, suffix)
+	local Frame = Instance.new("Frame")
+	Frame.Size = UDim2.new(1, -10, 0, 56)
+	Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+	Frame.BackgroundTransparency = 0.3
+	Frame.BorderSizePixel = 0
+	Frame.ZIndex = 6
+	Frame.Parent = parent
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(0.5, 0, 0, 20)
+	Label.Position = UDim2.new(0, 12, 0, 4)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+	Label.TextSize = 12
+	Label.Font = Enum.Font.Gotham
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.ZIndex = 7
+	Label.Parent = Frame
+
+	local VL = Instance.new("TextLabel")
+	VL.Size = UDim2.new(0.3, 0, 0, 20)
+	VL.Position = UDim2.new(0.7, -10, 0, 4)
+	VL.BackgroundTransparency = 1
+	VL.Text = tostring(default) .. (suffix or "")
+	VL.TextColor3 = Color3.fromRGB(0, 212, 255)
+	VL.TextSize = 12
+	VL.Font = Enum.Font.GothamBold
+	VL.TextXAlignment = Enum.TextXAlignment.Right
+	VL.ZIndex = 7
+	VL.Parent = Frame
+
+	local SBg = Instance.new("Frame")
+	SBg.Size = UDim2.new(1, -24, 0, 6)
+	SBg.Position = UDim2.new(0, 12, 0, 36)
+	SBg.BackgroundColor3 = Color3.fromRGB(35, 35, 60)
+	SBg.BorderSizePixel = 0
+	SBg.ZIndex = 7
+	SBg.Parent = Frame
+	Instance.new("UICorner", SBg).CornerRadius = UDim.new(1, 0)
 
 	local Fill = Instance.new("Frame")
 	Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
 	Fill.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
 	Fill.BorderSizePixel = 0
 	Fill.ZIndex = 8
-	Fill.Parent = SliderBg
+	Fill.Parent = SBg
 	Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
 
-	local Hitbox = Instance.new("TextButton")
-	Hitbox.Size = UDim2.new(1, 0, 1, 14)
-	Hitbox.Position = UDim2.new(0, 0, 0, -7)
-	Hitbox.BackgroundTransparency = 1
-	Hitbox.Text = ""
-	Hitbox.ZIndex = 9
-	Hitbox.Parent = SliderBg
+	local HB = Instance.new("TextButton")
+	HB.Size = UDim2.new(1, 0, 1, 14)
+	HB.Position = UDim2.new(0, 0, 0, -7)
+	HB.BackgroundTransparency = 1
+	HB.Text = ""
+	HB.ZIndex = 9
+	HB.Parent = SBg
 
-	local dragging = false
+	local drag = false
 
-	local function Update(input)
-		local pos = math.clamp((input.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
+	local function UpdSlider(input)
+		local pos = math.clamp((input.Position.X - SBg.AbsolutePosition.X) / SBg.AbsoluteSize.X, 0, 1)
 		local val = math.floor(min + (max - min) * pos)
 		KState[key] = val
-		ValueLbl.Text = tostring(val) .. (suffix or "")
+		VL.Text = tostring(val) .. (suffix or "")
 		Fill.Size = UDim2.new(pos, 0, 1, 0)
 	end
 
-	Hitbox.InputBegan:Connect(function(input)
+	HB.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = true
-			Update(input)
+			drag = true
+			UpdSlider(input)
 		end
 	end)
 
 	UserInputService.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-			Update(input)
+		if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			UpdSlider(input)
 		end
 	end)
 
 	UserInputService.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			dragging = false
+			drag = false
 		end
 	end)
 end
 
--- Button Creator
-local function CreateButton(parent, text, callback)
+-- Button
+local function CreateButton(parent, text, callback, color)
 	local Frame = Instance.new("Frame")
-	Frame.Size = UDim2.new(1, -10, 0, 42)
-	Frame.BackgroundColor3 = Color3.fromRGB(22, 22, 40)
-	Frame.BackgroundTransparency = 0.35
+	Frame.Size = UDim2.new(1, -10, 0, 40)
+	Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+	Frame.BackgroundTransparency = 0.3
 	Frame.BorderSizePixel = 0
 	Frame.ZIndex = 6
 	Frame.Parent = parent
@@ -362,65 +406,137 @@ local function CreateButton(parent, text, callback)
 
 	local Btn = Instance.new("TextButton")
 	Btn.Size = UDim2.new(1, 0, 1, 0)
-	Btn.BackgroundColor3 = Color3.fromRGB(0, 180, 230)
-	Btn.BackgroundTransparency = 0.65
+	Btn.BackgroundColor3 = color or Color3.fromRGB(0, 180, 230)
+	Btn.BackgroundTransparency = 0.6
 	Btn.BorderSizePixel = 0
 	Btn.Text = text
 	Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	Btn.TextSize = 14
+	Btn.TextSize = 13
 	Btn.Font = Enum.Font.GothamBold
 	Btn.ZIndex = 7
 	Btn.Parent = Frame
 	Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
 
 	Btn.MouseEnter:Connect(function()
-		TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.35}):Play()
+		TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.3}):Play()
 	end)
 	Btn.MouseLeave:Connect(function()
-		TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.65}):Play()
+		TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundTransparency = 0.6}):Play()
 	end)
 	Btn.MouseButton1Click:Connect(callback)
 end
 
+-- Dropdown (для выбора шаблона)
+local function CreateDropdown(parent, text, options, stateKey)
+	local Frame = Instance.new("Frame")
+	Frame.Size = UDim2.new(1, -10, 0, 40)
+	Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+	Frame.BackgroundTransparency = 0.3
+	Frame.BorderSizePixel = 0
+	Frame.ZIndex = 6
+	Frame.Parent = parent
+	Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 8)
+
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(0.5, 0, 1, 0)
+	Label.Position = UDim2.new(0, 12, 0, 0)
+	Label.BackgroundTransparency = 1
+	Label.Text = text
+	Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+	Label.TextSize = 13
+	Label.Font = Enum.Font.Gotham
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.ZIndex = 7
+	Label.Parent = Frame
+
+	local Selected = Instance.new("TextButton")
+	Selected.Size = UDim2.new(0, 130, 0, 28)
+	Selected.Position = UDim2.new(1, -140, 0.5, -14)
+	Selected.BackgroundColor3 = Color3.fromRGB(35, 35, 60)
+	Selected.BorderSizePixel = 0
+	Selected.Text = KState[stateKey] or options[1]
+	Selected.TextColor3 = Color3.fromRGB(0, 212, 255)
+	Selected.TextSize = 12
+	Selected.Font = Enum.Font.GothamBold
+	Selected.ZIndex = 7
+	Selected.Parent = Frame
+	Instance.new("UICorner", Selected).CornerRadius = UDim.new(0, 6)
+
+	local ListFrame = Instance.new("Frame")
+	ListFrame.Size = UDim2.new(0, 130, 0, #options * 28)
+	ListFrame.Position = UDim2.new(1, -140, 0, 38)
+	ListFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 55)
+	ListFrame.BorderSizePixel = 0
+	ListFrame.ZIndex = 10
+	ListFrame.Visible = false
+	ListFrame.Parent = Frame
+	Instance.new("UICorner", ListFrame).CornerRadius = UDim.new(0, 6)
+
+	for i, opt in ipairs(options) do
+		local OptBtn = Instance.new("TextButton")
+		OptBtn.Size = UDim2.new(1, 0, 0, 28)
+		OptBtn.Position = UDim2.new(0, 0, 0, (i - 1) * 28)
+		OptBtn.BackgroundTransparency = 1
+		OptBtn.Text = opt
+		OptBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+		OptBtn.TextSize = 12
+		OptBtn.Font = Enum.Font.Gotham
+		OptBtn.ZIndex = 11
+		OptBtn.Parent = ListFrame
+
+		OptBtn.MouseEnter:Connect(function()
+			OptBtn.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
+			OptBtn.BackgroundTransparency = 0.8
+		end)
+		OptBtn.MouseLeave:Connect(function()
+			OptBtn.BackgroundTransparency = 1
+		end)
+		OptBtn.MouseButton1Click:Connect(function()
+			KState[stateKey] = opt
+			Selected.Text = opt
+			ListFrame.Visible = false
+		end)
+	end
+
+	Selected.MouseButton1Click:Connect(function()
+		ListFrame.Visible = not ListFrame.Visible
+	end)
+end
+
 -- ==================== TABS ====================
 
--- Tab: Farm
+-- ⚡ Фарм
 local FarmTab = CreateTab("Фарм", "⚡")
 CreateToggle(FarmTab, "Автофарм монет", "AutoFarmCoins")
 CreateSlider(FarmTab, "Задержка фарма", 1, 20, 5, "CoinFarmDelay", " (0.1с)")
 CreateToggle(FarmTab, "Автофарм опыта", "AutoFarmXP")
 CreateToggle(FarmTab, "Автосбор ресурсов", "AutoCollectResources")
+CreateToggle(FarmTab, "Anti-AFK", "AntiAFK")
 
--- Tab: Build
+-- 🏗️ Билд (улучшенный)
 local BuildTab = CreateTab("Билд", "🏗️")
-CreateToggle(BuildTab, "Бесконечные материалы", "InfiniteMaterials")
+CreateToggle(BuildTab, "Бесконечные блоки", "InfiniteMaterials")
+CreateToggle(BuildTab, "Быстрая установка", "FastPlace")
+CreateToggle(BuildTab, "Авто-Велд", "AutoWeld")
 CreateToggle(BuildTab, "Авто-чинка корабля", "AutoRepair")
-CreateButton(BuildTab, "Автопостройка корабля", function()
-	pcall(function()
-		local tool = GetCharacter():FindFirstChildOfClass("Tool")
-		if tool then
-			local event = tool:FindFirstChild("BuildEvent") or tool:FindFirstChild("PlaceBlock")
-			if event then
-				local mouse = LocalPlayer:GetMouse()
-				event:FireServer(mouse.Hit.Position, CFrame.new())
-			end
-		end
-	end)
-end)
-CreateButton(BuildTab, "Мгновенная установка блоков", function()
-	pcall(function()
-		local tool = GetCharacter():FindFirstChildOfClass("Tool")
-		if tool then
-			local event = tool:FindFirstChild("BuildEvent") or tool:FindFirstChild("PlaceBlock")
-			if event then
-				local mouse = LocalPlayer:GetMouse()
-				event:FireServer(mouse.Hit.Position, CFrame.new())
-			end
-		end
-	end)
-end)
+CreateDropdown(BuildTab, "Шаблон:", {"Jet", "Boat", "Tower", "Bridge", "GoldFarm"}, "BuildTemplate")
 
--- Tab: Transport
+CreateButton(BuildTab, "▶ Автопостройка шаблона", function()
+	KState.AutoBuild = true
+	print("[KYDIABROSO] AutoBuild запущен: " .. KState.BuildTemplate)
+end, Color3.fromRGB(0, 200, 100))
+
+CreateButton(BuildTab, "⏹ Остановить постройку", function()
+	KState.AutoBuild = false
+	print("[KYDIABROSO] AutoBuild остановлен")
+end, Color3.fromRGB(200, 50, 50))
+
+CreateButton(BuildTab, "📋 Скопировать чужой корабль", function()
+	KState.StealBuild = true
+	print("[KYDIABROSO] StealBuild активирован")
+end, Color3.fromRGB(255, 165, 0))
+
+-- 🚀 Транспорт
 local TransTab = CreateTab("Транспорт", "🚀")
 CreateToggle(TransTab, "Fly (Полет)", "Fly")
 CreateSlider(TransTab, "Скорость полета", 10, 500, 100, "FlySpeed", "")
@@ -428,20 +544,22 @@ CreateToggle(TransTab, "Speed (Скорость)", "Speed")
 CreateSlider(TransTab, "Множитель скорости", 10, 200, 50, "WalkSpeed", "")
 CreateSlider(TransTab, "Jump Power", 10, 200, 50, "JumpPower", "")
 CreateToggle(TransTab, "Noclip", "Noclip")
+
 CreateButton(TransTab, "Телепорт на старт", function()
 	pcall(function()
-		local spawnLoc = Workspace:FindFirstChild("SpawnLocation") or Workspace:FindFirstChild("Start")
-		if spawnLoc and spawnLoc:IsA("BasePart") then
-			local _, hrp = GetHumanoidAndHRP()
-			hrp.CFrame = spawnLoc.CFrame + Vector3.new(0, 5, 0)
+		local sp = Workspace:FindFirstChild("SpawnLocation") or Workspace:FindFirstChild("Start")
+		if sp and sp:IsA("BasePart") then
+			local _, hrp = GetHum()
+			hrp.CFrame = sp.CFrame + Vector3.new(0, 5, 0)
 		end
 	end)
 end)
-CreateButton(TransTab, "Телепорт к финишу", function()
+
+CreateButton(TransTab, "Телепорт к сундуку", function()
 	pcall(function()
-		local _, hrp = GetHumanoidAndHRP()
+		local _, hrp = GetHum()
 		for _, obj in pairs(Workspace:GetDescendants()) do
-			if obj.Name:lower():find("treasure") or obj.Name:lower():find("chest") or obj.Name:lower():find("endzone") then
+			if obj.Name:lower():find("treasure") or obj.Name:lower():find("chest") then
 				if obj:IsA("BasePart") then
 					hrp.CFrame = obj.CFrame + Vector3.new(0, 5, 0)
 					break
@@ -451,270 +569,80 @@ CreateButton(TransTab, "Телепорт к финишу", function()
 	end)
 end)
 
--- Tab: Settings
+CreateButton(TransTab, "Авто-доезд до сундука", function()
+	pcall(function()
+		local _, hrp = GetHum()
+		for _, obj in pairs(Workspace:GetDescendants()) do
+			if obj.Name:lower():find("treasure") or obj.Name:lower():find("chest") or obj.Name:lower():find("end") then
+				if obj:IsA("BasePart") then
+					local tween = TweenService:Create(hrp, TweenInfo.new(8, Enum.EasingStyle.Linear), {CFrame = obj.CFrame + Vector3.new(0, 10, 0)})
+					tween:Play()
+					break
+				end
+			end
+		end
+	end)
+end, Color3.fromRGB(255, 215, 0))
+
+-- 🌍 Мир
+local WorldTab = CreateTab("Мир", "🌍")
+CreateToggle(WorldTab, "Удалить воду", "DeleteWater")
+CreateButton(WorldTab, "Очистить туман", function()
+	pcall(function()
+		Lighting.FogEnd = 100000
+		Lighting.FogStart = 0
+		for _, v in pairs(Lighting:GetChildren()) do
+			if v:IsA("Atmosphere") then v:Destroy() end
+		end
+	end)
+end)
+CreateButton(WorldTab, "Полное освещение", function()
+	pcall(function()
+		Lighting.Brightness = 2
+		Lighting.ClockTime = 14
+		Lighting.GlobalShadows = false
+	end)
+end)
+
+-- ⚙️ Настройки
 local SetTab = CreateTab("Настройки", "⚙️")
 CreateButton(SetTab, "Сбросить все функции", function()
 	for k, v in pairs(KState) do
-		if type(v) == "boolean" then
-			KState[k] = false
-		end
+		if type(v) == "boolean" then KState[k] = false end
 	end
-end)
+end, Color3.fromRGB(200, 50, 50))
+
+CreateButton(SetTab, "Скрыть/Показать UI", function()
+	Main.Visible = not Main.Visible
+end, Color3.fromRGB(100, 100, 100))
 
 local Info = Instance.new("TextLabel")
-Info.Size = UDim2.new(1, -10, 0, 90)
+Info.Size = UDim2.new(1, -10, 0, 100)
 Info.BackgroundTransparency = 1
-Info.Text = "KYDIABROSO v2.2\nBuild A Boat For Treasure\nGitHub Edition\nУправление полетом: W/A/S/D | Space | LShift"
-Info.TextColor3 = Color3.fromRGB(140, 140, 160)
-Info.TextSize = 12
+Info.Text = "KYDIABROSO v3.0 ULTIMATE\nBuild A Boat For Treasure\nGitHub: hhhyolh82-eng/KYDIABROSO-\n\nУправление: W/A/S/D | Space | LShift\nСворачивание: кнопка − вверху"
+Info.TextColor3 = Color3.fromRGB(130, 130, 150)
+Info.TextSize = 11
 Info.Font = Enum.Font.Gotham
 Info.TextWrapped = true
 Info.ZIndex = 6
 Info.Parent = SetTab
 
 -- Activate first tab
-local firstTab = true
+local first = true
 for _, tab in pairs(Tabs) do
-	if firstTab then
+	if first then
 		tab.Frame.Visible = true
 		tab.Button.BackgroundColor3 = Color3.fromRGB(0, 212, 255)
 		tab.Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-		firstTab = false
+		first = false
 	end
 end
 
--- ==================== FEATURE LOGIC ====================
+-- ==================== ADVANCED BUILD SYSTEM ====================
 
--- Fly System
-local FlyBV, FlyBG, FlyConn
-
-local function StartFly()
-	if FlyBV then FlyBV:Destroy() end
-	if FlyBG then FlyBG:Destroy() end
-
-	local _, hrp = GetHumanoidAndHRP()
-	FlyBV = Instance.new("BodyVelocity")
-	FlyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-	FlyBV.Velocity = Vector3.zero
-	FlyBV.Parent = hrp
-
-	FlyBG = Instance.new("BodyGyro")
-	FlyBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-	FlyBG.P = 9e4
-	FlyBG.Parent = hrp
-
-	FlyConn = RunService.RenderStepped:Connect(function()
-		if not KState.Fly then return end
-		local cam = Camera
-		local dir = Vector3.zero
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
-		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0, 1, 0) end
-		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= Vector3.new(0, 1, 0) end
-
-		if dir.Magnitude > 0 then dir = dir.Unit * KState.FlySpeed end
-		FlyBV.Velocity = dir
-		FlyBG.CFrame = cam.CFrame
-	end)
-end
-
-local function StopFly()
-	if FlyConn then FlyConn:Disconnect() end
-	if FlyBV then FlyBV:Destroy() end
-	if FlyBG then FlyBG:Destroy() end
-	FlyConn, FlyBV, FlyBG = nil, nil, nil
-end
-
--- Noclip
-local NoclipConn
-local function StartNoclip()
-	NoclipConn = RunService.Stepped:Connect(function()
-		if KState.Noclip then
-			for _, part in pairs(GetCharacter():GetDescendants()) do
-				if part:IsA("BasePart") then part.CanCollide = false end
-			end
-		end
-	end)
-end
-
-local function StopNoclip()
-	if NoclipConn then NoclipConn:Disconnect() end
-	NoclipConn = nil
-	for _, part in pairs(GetCharacter():GetDescendants()) do
-		if part:IsA("BasePart") then part.CanCollide = true end
-	end
-end
-
--- AutoFarm Coins
-task.spawn(function()
-	while true do
-		if KState.AutoFarmCoins then
-			pcall(function()
-				for _, obj in pairs(Workspace:GetDescendants()) do
-					if not KState.AutoFarmCoins then break end
-					if obj.Name:lower():find("coin") or obj.Name:lower():find("gold") then
-						if obj:IsA("BasePart") and obj:FindFirstChild("TouchInterest") then
-							local _, hrp = GetHumanoidAndHRP()
-							firetouchinterest(hrp, obj, 0)
-							firetouchinterest(hrp, obj, 1)
-							task.wait(KState.CoinFarmDelay / 10)
-						end
-					end
-				end
-			end)
-		end
-		task.wait(0.5)
-	end
-end)
-
--- AutoFarm XP
-task.spawn(function()
-	while true do
-		if KState.AutoFarmXP then
-			pcall(function()
-				local _, hrp = GetHumanoidAndHRP()
-				for _, obj in pairs(Workspace:GetDescendants()) do
-					if not KState.AutoFarmXP then break end
-					if obj.Name:lower():find("xp") or obj.Name:lower():find("exp") then
-						if obj:IsA("BasePart") then
-							hrp.CFrame = obj.CFrame
-							task.wait(0.3)
-						end
-					end
-				end
-			end)
-		end
-		task.wait(1)
-	end
-end)
-
--- Auto Collect Resources
-task.spawn(function()
-	while true do
-		if KState.AutoCollectResources then
-			pcall(function()
-				for _, obj in pairs(Workspace:GetDescendants()) do
-					if not KState.AutoCollectResources then break end
-					if obj.Name:lower():find("wood") or obj.Name:lower():find("stone") or obj.Name:lower():find("block") then
-						if obj:IsA("BasePart") and obj:FindFirstChild("TouchInterest") then
-							local _, hrp = GetHumanoidAndHRP()
-							firetouchinterest(hrp, obj, 0)
-							firetouchinterest(hrp, obj, 1)
-							task.wait(0.2)
-						end
-					end
-				end
-			end)
-		end
-		task.wait(0.5)
-	end
-end)
-
--- Infinite Materials
-task.spawn(function()
-	while true do
-		if KState.InfiniteMaterials then
-			pcall(function()
-				local bp = LocalPlayer:FindFirstChild("Backpack")
-				if bp then
-					for _, tool in pairs(bp:GetChildren()) do
-						if tool:IsA("Tool") and tool:FindFirstChild("Amount") then
-							tool.Amount.Value = 9999
-						end
-					end
-				end
-				for _, tool in pairs(GetCharacter():GetChildren()) do
-					if tool:IsA("Tool") and tool:FindFirstChild("Amount") then
-						tool.Amount.Value = 9999
-					end
-				end
-			end)
-		end
-		task.wait(1)
-	end
-end)
-
--- Auto Repair
-task.spawn(function()
-	while true do
-		if KState.AutoRepair then
-			pcall(function()
-				for _, boat in pairs(Workspace:GetChildren()) do
-					if boat.Name:find(LocalPlayer.Name) or boat.Name:lower():find("boat") then
-						for _, part in pairs(boat:GetDescendants()) do
-							if part:IsA("BasePart") then
-								local hp = part:FindFirstChild("Health") or part:FindFirstChild("HP")
-								if hp and hp:IsA("NumberValue") then hp.Value = 100 end
-							end
-						end
-					end
-				end
-			end)
-		end
-		task.wait(2)
-	end
-end)
-
--- State Monitor
-task.spawn(function()
-	while ScreenGui and ScreenGui.Parent do
-		if KState.Fly and not FlyConn then StartFly() end
-		if not KState.Fly and FlyConn then StopFly() end
-		if KState.Noclip and not NoclipConn then StartNoclip() end
-		if not KState.Noclip and NoclipConn then StopNoclip() end
-
-		local hum = select(1, GetHumanoidAndHRP())
-		if KState.Speed then
-			hum.WalkSpeed = KState.WalkSpeed
-		else
-			hum.WalkSpeed = 16
-		end
-		hum.JumpPower = KState.JumpPower
-
-		task.wait(0.3)
-	end
-end)
-
--- Character respawn handler
-LocalPlayer.CharacterAdded:Connect(function()
-	task.wait(1)
-	if KState.Fly then StartFly() end
-	if KState.Noclip then StartNoclip() end
-end)
-
--- Drag UI
-local drag, dragStart, startPos = false, nil, nil
-
-Title.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		drag = true
-		dragStart = input.Position
-		startPos = MainFrame.Position
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		local delta = input.Position - dragStart
-		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		drag = false
-	end
-end)
-
--- Open animation
-MainFrame.Size = UDim2.new(0, 0, 0, 0)
-MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-	Size = UDim2.new(0, 520, 0, 360),
-	Position = UDim2.new(0.5, -260, 0.5, -180)
-}):Play()
-
-print("[KYDIABROSO] Loaded successfully | GitHub Edition v2.2")
+-- Шаблоны построек (координаты относительно точки спавна)
+local BuildTemplates = {
+	Jet = {
+		{block = "WoodBlock", pos = Vector3.new(0, 0, 0), size = Vector3.new(2, 1, 4)},
+		{block = "WoodBlock", pos = Vector3.new(0, 1, 0), size = Vector3.new(2, 1, 4)},
+		{block = "WoodBlock", pos = Vector3
