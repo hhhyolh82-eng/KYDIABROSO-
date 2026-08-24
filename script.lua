@@ -426,7 +426,7 @@ local function CreateButton(parent, text, callback, color)
 	Btn.MouseButton1Click:Connect(callback)
 end
 
--- Dropdown (для выбора шаблона)
+-- Dropdown
 local function CreateDropdown(parent, text, options, stateKey)
 	local Frame = Instance.new("Frame")
 	Frame.Size = UDim2.new(1, -10, 0, 40)
@@ -505,7 +505,7 @@ end
 
 -- ==================== TABS ====================
 
--- ⚡ Фарм
+-- Farm
 local FarmTab = CreateTab("Фарм", "⚡")
 CreateToggle(FarmTab, "Автофарм монет", "AutoFarmCoins")
 CreateSlider(FarmTab, "Задержка фарма", 1, 20, 5, "CoinFarmDelay", " (0.1с)")
@@ -513,7 +513,7 @@ CreateToggle(FarmTab, "Автофарм опыта", "AutoFarmXP")
 CreateToggle(FarmTab, "Автосбор ресурсов", "AutoCollectResources")
 CreateToggle(FarmTab, "Anti-AFK", "AntiAFK")
 
--- 🏗️ Билд (улучшенный)
+-- Build
 local BuildTab = CreateTab("Билд", "🏗️")
 CreateToggle(BuildTab, "Бесконечные блоки", "InfiniteMaterials")
 CreateToggle(BuildTab, "Быстрая установка", "FastPlace")
@@ -523,20 +523,18 @@ CreateDropdown(BuildTab, "Шаблон:", {"Jet", "Boat", "Tower", "Bridge", "Go
 
 CreateButton(BuildTab, "▶ Автопостройка шаблона", function()
 	KState.AutoBuild = true
-	print("[KYDIABROSO] AutoBuild запущен: " .. KState.BuildTemplate)
+	print("[KYDIABROSO] AutoBuild: " .. KState.BuildTemplate)
 end, Color3.fromRGB(0, 200, 100))
 
 CreateButton(BuildTab, "⏹ Остановить постройку", function()
 	KState.AutoBuild = false
-	print("[KYDIABROSO] AutoBuild остановлен")
 end, Color3.fromRGB(200, 50, 50))
 
 CreateButton(BuildTab, "📋 Скопировать чужой корабль", function()
 	KState.StealBuild = true
-	print("[KYDIABROSO] StealBuild активирован")
 end, Color3.fromRGB(255, 165, 0))
 
--- 🚀 Транспорт
+-- Transport
 local TransTab = CreateTab("Транспорт", "🚀")
 CreateToggle(TransTab, "Fly (Полет)", "Fly")
 CreateSlider(TransTab, "Скорость полета", 10, 500, 100, "FlySpeed", "")
@@ -575,8 +573,7 @@ CreateButton(TransTab, "Авто-доезд до сундука", function()
 		for _, obj in pairs(Workspace:GetDescendants()) do
 			if obj.Name:lower():find("treasure") or obj.Name:lower():find("chest") or obj.Name:lower():find("end") then
 				if obj:IsA("BasePart") then
-					local tween = TweenService:Create(hrp, TweenInfo.new(8, Enum.EasingStyle.Linear), {CFrame = obj.CFrame + Vector3.new(0, 10, 0)})
-					tween:Play()
+					TweenService:Create(hrp, TweenInfo.new(8, Enum.EasingStyle.Linear), {CFrame = obj.CFrame + Vector3.new(0, 10, 0)}):Play()
 					break
 				end
 			end
@@ -584,7 +581,7 @@ CreateButton(TransTab, "Авто-доезд до сундука", function()
 	end)
 end, Color3.fromRGB(255, 215, 0))
 
--- 🌍 Мир
+-- World
 local WorldTab = CreateTab("Мир", "🌍")
 CreateToggle(WorldTab, "Удалить воду", "DeleteWater")
 CreateButton(WorldTab, "Очистить туман", function()
@@ -604,7 +601,7 @@ CreateButton(WorldTab, "Полное освещение", function()
 	end)
 end)
 
--- ⚙️ Настройки
+-- Settings
 local SetTab = CreateTab("Настройки", "⚙️")
 CreateButton(SetTab, "Сбросить все функции", function()
 	for k, v in pairs(KState) do
@@ -640,9 +637,399 @@ end
 
 -- ==================== ADVANCED BUILD SYSTEM ====================
 
--- Шаблоны построек (координаты относительно точки спавна)
 local BuildTemplates = {
 	Jet = {
 		{block = "WoodBlock", pos = Vector3.new(0, 0, 0), size = Vector3.new(2, 1, 4)},
 		{block = "WoodBlock", pos = Vector3.new(0, 1, 0), size = Vector3.new(2, 1, 4)},
-		{block = "WoodBlock", pos = Vector3
+		{block = "WoodBlock", pos = Vector3.new(-2, 0, 0), size = Vector3.new(1, 1, 3)},
+		{block = "WoodBlock", pos = Vector3.new(2, 0, 0), size = Vector3.new(1, 1, 3)},
+		{block = "WoodBlock", pos = Vector3.new(0, 0, -3), size = Vector3.new(2, 1, 1)},
+		{block = "WoodBlock", pos = Vector3.new(0, 1, -2), size = Vector3.new(1, 1, 1)},
+		{block = "Seat", pos = Vector3.new(0, 2, 0)},
+		{block = "Thruster", pos = Vector3.new(-1, 0, -3)},
+		{block = "Thruster", pos = Vector3.new(1, 0, -3)},
+	},
+	Boat = {
+		{block = "WoodBlock", pos = Vector3.new(0, 0, 0), size = Vector3.new(4, 1, 6)},
+		{block = "WoodBlock", pos = Vector3.new(0, 1, 0), size = Vector3.new(3, 1, 4)},
+		{block = "WoodBlock", pos = Vector3.new(-2, 0, 0), size = Vector3.new(1, 1, 5)},
+		{block = "WoodBlock", pos = Vector3.new(2, 0, 0), size = Vector3.new(1, 1, 5)},
+		{block = "Seat", pos = Vector3.new(0, 2, 1)},
+		{block = "Thruster", pos = Vector3.new(0, 0, -3)},
+	},
+	Tower = {
+		{block = "WoodBlock", pos = Vector3.new(0, 0, 0), size = Vector3.new(3, 1, 3)},
+		{block = "WoodBlock", pos = Vector3.new(0, 1, 0), size = Vector3.new(3, 1, 3)},
+		{block = "WoodBlock", pos = Vector3.new(0, 2, 0), size = Vector3.new(3, 1, 3)},
+		{block = "WoodBlock", pos = Vector3.new(0, 3, 0), size = Vector3.new(2, 1, 2)},
+		{block = "WoodBlock", pos = Vector3.new(0, 4, 0), size = Vector3.new(2, 1, 2)},
+		{block = "Seat", pos = Vector3.new(0, 5, 0)},
+		{block = "Thruster", pos = Vector3.new(0, 0, -2)},
+	},
+	Bridge = {
+		{block = "WoodBlock", pos = Vector3.new(0, 0, 0), size = Vector3.new(2, 1, 10)},
+		{block = "WoodBlock", pos = Vector3.new(0, 1, 0), size = Vector3.new(2, 1, 8)},
+		{block = "Seat", pos = Vector3.new(0, 2, 0)},
+		{block = "Thruster", pos = Vector3.new(0, 0, -5)},
+		{block = "Thruster", pos = Vector3.new(0, 0, 5)},
+	},
+	GoldFarm = {
+		{block = "WoodBlock", pos = Vector3.new(0, 0, 0), size = Vector3.new(2, 1, 2)},
+		{block = "WoodBlock", pos = Vector3.new(0, 1, 0), size = Vector3.new(2, 1, 2)},
+		{block = "WoodBlock", pos = Vector3.new(0, 2, 0), size = Vector3.new(2, 1, 2)},
+		{block = "Seat", pos = Vector3.new(0, 3, 0)},
+		{block = "Thruster", pos = Vector3.new(0, 0, -2)},
+		{block = "Balloon", pos = Vector3.new(-1, 3, 0)},
+		{block = "Balloon", pos = Vector3.new(1, 3, 0)},
+		{block = "Balloon", pos = Vector3.new(0, 3, -1)},
+		{block = "Balloon", pos = Vector3.new(0, 3, 1)},
+	},
+}
+
+local function PlaceBlock(blockName, cframe)
+	pcall(function()
+		local tool = GetChar():FindFirstChildOfClass("Tool")
+		if not tool then
+			local bp = LocalPlayer:FindFirstChild("Backpack")
+			if bp then
+				for _, t in pairs(bp:GetChildren()) do
+					if t:IsA("Tool") and (t.Name:lower():find("block") or t.Name:lower():find("wood") or t.Name:lower():find("build")) then
+						t.Parent = GetChar()
+						tool = t
+						break
+					end
+				end
+			end
+		end
+		if tool then
+			local event = tool:FindFirstChild("BuildEvent") or tool:FindFirstChild("PlaceBlock") or tool:FindFirstChild("Place")
+			if event then
+				event:FireServer(cframe.Position, cframe)
+			else
+				local rs = ReplicatedStorage:FindFirstChild("PlaceBlock") or ReplicatedStorage:FindFirstChild("Build")
+				if rs then rs:FireServer(blockName, cframe) end
+			end
+		end
+	end)
+end
+
+-- AutoBuild
+task.spawn(function()
+	while true do
+		if KState.AutoBuild then
+			pcall(function()
+				local template = BuildTemplates[KState.BuildTemplate]
+				if template then
+					local _, hrp = GetHum()
+					local basePos = hrp.Position
+					for _, data in ipairs(template) do
+						if not KState.AutoBuild then break end
+						local cf = CFrame.new(basePos + data.pos)
+						PlaceBlock(data.block, cf)
+						task.wait(KState.FastPlace and 0.05 or 0.15)
+					end
+					if KState.AutoWeld then
+						task.wait(0.5)
+						for _, boat in pairs(Workspace:GetChildren()) do
+							if boat.Name:find(LocalPlayer.Name) or boat.Name:lower():find("boat") then
+								for _, part in pairs(boat:GetDescendants()) do
+									if part:IsA("BasePart") then
+										local weld = Instance.new("WeldConstraint")
+										weld.Part0 = part
+										weld.Part1 = boat:FindFirstChildWhichIsA("BasePart")
+										weld.Parent = part
+									end
+								end
+							end
+						end
+					end
+					KState.AutoBuild = false
+				end
+			end)
+		end
+		task.wait(0.5)
+	end
+end)
+
+-- Steal Build
+task.spawn(function()
+	while true do
+		if KState.StealBuild then
+			pcall(function()
+				local _, hrp = GetHum()
+				local nearestBoat = nil
+				local nearestDist = 50
+				for _, obj in pairs(Workspace:GetChildren()) do
+					if obj.Name:find("Boat") or obj:FindFirstChild("Seat") then
+						local primary = obj:FindFirstChildWhichIsA("BasePart")
+						if primary then
+							local dist = (primary.Position - hrp.Position).Magnitude
+							if dist < nearestDist and not obj.Name:find(LocalPlayer.Name) then
+								nearestBoat = obj
+								nearestDist = dist
+							end
+						end
+					end
+				end
+				if nearestBoat then
+					local basePart = nearestBoat:FindFirstChildWhichIsA("BasePart")
+					if basePart then
+						local basePos = hrp.Position
+						local offset = basePos - basePart.Position
+						for _, part in pairs(nearestBoat:GetDescendants()) do
+							if part:IsA("BasePart") then
+								local newPos = part.Position + offset
+								PlaceBlock(part.Name, CFrame.new(newPos) * part.CFrame.Rotation)
+								task.wait(KState.FastPlace and 0.05 or 0.1)
+							end
+						end
+					end
+				end
+				KState.StealBuild = false
+			end)
+		end
+		task.wait(1)
+	end
+end)
+
+-- ==================== CORE FEATURES ====================
+
+local FlyBV, FlyBG, FlyConn
+
+local function StartFly()
+	if FlyBV then FlyBV:Destroy() end
+	if FlyBG then FlyBG:Destroy() end
+	local _, hrp = GetHum()
+	FlyBV = Instance.new("BodyVelocity")
+	FlyBV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	FlyBV.Velocity = Vector3.zero
+	FlyBV.Parent = hrp
+	FlyBG = Instance.new("BodyGyro")
+	FlyBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+	FlyBG.P = 9e4
+	FlyBG.Parent = hrp
+	FlyConn = RunService.RenderStepped:Connect(function()
+		if not KState.Fly then return end
+		local cam = Camera
+		local dir = Vector3.zero
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0, 1, 0) end
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= Vector3.new(0, 1, 0) end
+		if dir.Magnitude > 0 then dir = dir.Unit * KState.FlySpeed end
+		FlyBV.Velocity = dir
+		FlyBG.CFrame = cam.CFrame
+	end)
+end
+
+local function StopFly()
+	if FlyConn then FlyConn:Disconnect() end
+	if FlyBV then FlyBV:Destroy() end
+	if FlyBG then FlyBG:Destroy() end
+	FlyConn, FlyBV, FlyBG = nil, nil, nil
+end
+
+local NoclipConn
+local function StartNoclip()
+	NoclipConn = RunService.Stepped:Connect(function()
+		if KState.Noclip then
+			for _, part in pairs(GetChar():GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = false end
+			end
+		end
+	end)
+end
+
+local function StopNoclip()
+	if NoclipConn then NoclipConn:Disconnect() end
+	NoclipConn = nil
+	for _, part in pairs(GetChar():GetDescendants()) do
+		if part:IsA("BasePart") then part.CanCollide = true end
+	end
+end
+
+local function DeleteWater()
+	pcall(function()
+		for _, obj in pairs(Workspace:GetDescendants()) do
+			if obj.Name:lower():find("water") and obj:IsA("BasePart") then
+				obj:Destroy()
+			end
+		end
+		Workspace.Terrain:Clear()
+	end)
+end
+
+-- AutoFarm Coins
+task.spawn(function()
+	while true do
+		if KState.AutoFarmCoins then
+			pcall(function()
+				local _, hrp = GetHum()
+				for _, obj in pairs(Workspace:GetDescendants()) do
+					if not KState.AutoFarmCoins then break end
+					local name = obj.Name:lower()
+					if name:find("coin") or name:find("gold") or name:find("money") or name:find("treasure") then
+						if obj:IsA("BasePart") then
+							if obj:FindFirstChild("TouchInterest") then
+								firetouchinterest(hrp, obj, 0)
+								firetouchinterest(hrp, obj, 1)
+							else
+								hrp.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+							end
+							task.wait(KState.CoinFarmDelay / 10)
+						end
+					end
+				end
+			end)
+		end
+		task.wait(0.3)
+	end
+end)
+
+-- AutoFarm XP
+task.spawn(function()
+	while true do
+		if KState.AutoFarmXP then
+			pcall(function()
+				local _, hrp = GetHum()
+				for _, obj in pairs(Workspace:GetDescendants()) do
+					if not KState.AutoFarmXP then break end
+					if obj.Name:lower():find("xp") or obj.Name:lower():find("exp") or obj.Name:lower():find("experience") then
+						if obj:IsA("BasePart") then
+							hrp.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
+							task.wait(0.3)
+						end
+					end
+				end
+			end)
+		end
+		task.wait(0.5)
+	end
+end)
+
+-- Auto Collect Resources
+task.spawn(function()
+	while true do
+		if KState.AutoCollectResources then
+			pcall(function()
+				local _, hrp = GetHum()
+				for _, obj in pairs(Workspace:GetDescendants()) do
+					if not KState.AutoCollectResources then break end
+					local name = obj.Name:lower()
+					if name:find("wood") or name:find("stone") or name:find("block") or name:find("material") or name:find("chest") then
+						if obj:IsA("BasePart") and obj:FindFirstChild("TouchInterest") then
+							firetouchinterest(hrp, obj, 0)
+							firetouchinterest(hrp, obj, 1)
+							task.wait(0.15)
+						end
+					end
+				end
+			end)
+		end
+		task.wait(0.3)
+	end
+end)
+
+-- Infinite Materials
+task.spawn(function()
+	while true do
+		if KState.InfiniteMaterials then
+			pcall(function()
+				local bp = LocalPlayer:FindFirstChild("Backpack")
+				if bp then
+					for _, tool in pairs(bp:GetChildren()) do
+						if tool:IsA("Tool") then
+							local amount = tool:FindFirstChild("Amount") or tool:FindFirstChild("Count") or tool:FindFirstChild("Quantity")
+							if amount and amount:IsA("NumberValue") then amount.Value = 9999 end
+							local intAmount = tool:FindFirstChild("Amount")
+							if intAmount and intAmount:IsA("IntValue") then intAmount.Value = 9999 end
+						end
+					end
+				end
+				for _, tool in pairs(GetChar():GetChildren()) do
+					if tool:IsA("Tool") then
+						local amount = tool:FindFirstChild("Amount") or tool:FindFirstChild("Count")
+						if amount then amount.Value = 9999 end
+					end
+				end
+			end)
+		end
+		task.wait(0.5)
+	end
+end)
+
+-- Auto Repair
+task.spawn(function()
+	while true do
+		if KState.AutoRepair then
+			pcall(function()
+				for _, boat in pairs(Workspace:GetChildren()) do
+					if boat.Name:find(LocalPlayer.Name) or boat.Name:lower():find("boat") then
+						for _, part in pairs(boat:GetDescendants()) do
+							if part:IsA("BasePart") then
+								local hp = part:FindFirstChild("Health") or part:FindFirstChild("HP") or part:FindFirstChild("HitPoints")
+								if hp and hp:IsA("NumberValue") then hp.Value = 100 end
+								if hp and hp:IsA("IntValue") then hp.Value = 100 end
+							end
+						end
+					end
+				end
+			end)
+		end
+		task.wait(1)
+	end
+end)
+
+-- State Monitor
+task.spawn(function()
+	while SG and SG.Parent do
+		if KState.Fly and not FlyConn then StartFly() end
+		if not KState.Fly and FlyConn then StopFly() end
+		if KState.Noclip and not NoclipConn then StartNoclip() end
+		if not KState.Noclip and NoclipConn then StopNoclip() end
+		if KState.DeleteWater then DeleteWater() end
+		local hum = select(1, GetHum())
+		if KState.Speed then hum.WalkSpeed = KState.WalkSpeed else hum.WalkSpeed = 16 end
+		hum.JumpPower = KState.JumpPower
+		task.wait(0.2)
+	end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(1)
+	if KState.Fly then StartFly() end
+	if KState.Noclip then StartNoclip() end
+end)
+
+-- Drag
+local dragging, dragStart, startPos = false, nil, nil
+Title.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = Main.Position
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- Open animation
+Main.Size = UDim2.new(0, 0, 0, 0)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+	Size = UDim2.new(0, 540, 0, 400),
+	Position = UDim2.new(0.5, -270, 0.5, -200)
+}):Play()
+
+print("[KYDIABROSO] v3.0 ULTIMATE loaded | AutoBuild + Steal + Inf Blocks + AutoFarm")
