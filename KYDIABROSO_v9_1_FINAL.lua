@@ -1,12 +1,18 @@
 --[[
     KYDIABROSO HUB | Muscle Legends
-    PlaceId: 155615604
-    Исправленная рабочая версия v9.1 FINAL
+    Версия: 10.0 (Auto Farm + Crystal Selector)
+    Основано на: KING SUPREMACY V8.2, Nova Hub X, Tokattk
 ]]
 
+--// ПРОВЕРКА ИГРЫ
+if game.PlaceId ~= 155615604 then
+    return warn("KYDIABROSO: Скрипт только для Muscle Legends.")
+end
+
+--// СЕРВИСЫ И ПЕРЕМЕННЫЕ
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
@@ -17,47 +23,51 @@ repeat task.wait() until LP.Character:FindFirstChild("HumanoidRootPart")
 local rEvents = RS:FindFirstChild("rEvents")
 local MuscleEvent = LP:FindFirstChild("MuscleEvent") or LP.Character:FindFirstChild("MuscleEvent")
 
+--// СОСТОЯНИЕ (ГЛОБАЛЬНЫЕ ФЛАГИ)
 _G.Kydiabroso = {
     AutoFarm = false, AutoRebirth = false, KillAura = false,
     AutoPunch = false, AutoCrystals = false, AutoGift = false,
-    AutoProtein = false, AutoWeight = false, Hidden = false
+    AutoProtein = false, AutoWeight = false, Hidden = false,
+    CrystalName = "Blue Crystal" -- Выбор кристалла по умолчанию
 }
 
+--// УДАЛЯЕМ СТАРОЕ МЕНЮ
 if LP.PlayerGui:FindFirstChild("KYDIABROSO_HUB") then
     LP.PlayerGui.KYDIABROSO_HUB:Destroy()
 end
 
+--// ГЛАВНОЕ ОКНО
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KYDIABROSO_HUB"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LP:WaitForChild("PlayerGui")
 
--- === ГЛАВНОЕ ОКНО ===
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 620, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -310, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MainFrame.Size = UDim2.new(0, 640, 0, 440)
+MainFrame.Position = UDim2.new(0.5, -320, 0.5, -220)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 10, 22)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
 
 local MainStroke = Instance.new("UIStroke", MainFrame)
-MainStroke.Color = Color3.fromRGB(80, 50, 200)
+MainStroke.Color = Color3.fromRGB(120, 70, 255)
 MainStroke.Thickness = 2
+MainStroke.Transparency = 0.2
 
--- === ЗАГОЛОВОК ===
+--// ЗАГОЛОВОК
 local TitleBar = Instance.new("Frame")
-TitleBar.Size = UDim2.new(1, 0, 0, 42)
-TitleBar.BackgroundColor3 = Color3.fromRGB(25, 20, 45)
+TitleBar.Size = UDim2.new(1, 0, 0, 45)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 18, 45)
 TitleBar.BorderSizePixel = 0
 TitleBar.Parent = MainFrame
-Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", TitleBar).CornerRadius = UDim.new(0, 14)
 
 local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(1, -100, 1, 0)
-TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.Size = UDim2.new(1, -120, 1, 0)
+TitleText.Position = UDim2.new(0, 18, 0, 0)
 TitleText.BackgroundTransparency = 1
 TitleText.Text = "KYDIABROSO | Muscle Legends"
 TitleText.TextColor3 = Color3.fromRGB(180, 130, 255)
@@ -68,8 +78,8 @@ TitleText.Parent = TitleBar
 
 local MinimizeBtn = Instance.new("TextButton")
 MinimizeBtn.Size = UDim2.new(0, 32, 0, 32)
-MinimizeBtn.Position = UDim2.new(1, -80, 0, 5)
-MinimizeBtn.BackgroundColor3 = Color3.fromRGB(60, 40, 100)
+MinimizeBtn.Position = UDim2.new(1, -80, 0, 6)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 45, 130)
 MinimizeBtn.Text = "—"
 MinimizeBtn.TextColor3 = Color3.fromRGB(200, 180, 255)
 MinimizeBtn.TextSize = 18
@@ -79,7 +89,7 @@ Instance.new("UICorner", MinimizeBtn).CornerRadius = UDim.new(0, 6)
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 32, 0, 32)
-CloseBtn.Position = UDim2.new(1, -40, 0, 5)
+CloseBtn.Position = UDim2.new(1, -42, 0, 6)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(120, 30, 60)
 CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 150, 180)
@@ -88,19 +98,19 @@ CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Parent = TitleBar
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
--- === ВКЛАДКИ ===
+--// ВКЛАДКИ
 local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(0, 130, 1, -50)
-TabBar.Position = UDim2.new(0, 5, 0, 45)
-TabBar.BackgroundColor3 = Color3.fromRGB(18, 15, 30)
+TabBar.Size = UDim2.new(0, 140, 1, -55)
+TabBar.Position = UDim2.new(0, 6, 0, 50)
+TabBar.BackgroundColor3 = Color3.fromRGB(18, 15, 32)
 TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 Instance.new("UICorner", TabBar).CornerRadius = UDim.new(0, 8)
 
 local ContentArea = Instance.new("Frame")
-ContentArea.Size = UDim2.new(1, -145, 1, -55)
-ContentArea.Position = UDim2.new(0, 140, 0, 48)
-ContentArea.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
+ContentArea.Size = UDim2.new(1, -160, 1, -60)
+ContentArea.Position = UDim2.new(0, 152, 0, 52)
+ContentArea.BackgroundColor3 = Color3.fromRGB(10, 8, 20)
 ContentArea.BorderSizePixel = 0
 ContentArea.Parent = MainFrame
 Instance.new("UICorner", ContentArea).CornerRadius = UDim.new(0, 8)
@@ -108,9 +118,9 @@ Instance.new("UICorner", ContentArea).CornerRadius = UDim.new(0, 8)
 local Tabs = {}
 local function CreateTab(name, icon)
     local tabBtn = Instance.new("TextButton")
-    tabBtn.Size = UDim2.new(1, -10, 0, 38)
-    tabBtn.Position = UDim2.new(0, 5, 0, 5 + (#Tabs * 42))
-    tabBtn.BackgroundColor3 = Color3.fromRGB(25, 20, 45)
+    tabBtn.Size = UDim2.new(1, -12, 0, 38)
+    tabBtn.Position = UDim2.new(0, 6, 0, 6 + (#Tabs * 42))
+    tabBtn.BackgroundColor3 = Color3.fromRGB(28, 22, 50)
     tabBtn.Text = icon .. "  " .. name
     tabBtn.TextColor3 = Color3.fromRGB(160, 140, 200)
     tabBtn.TextSize = 13
@@ -123,7 +133,7 @@ local function CreateTab(name, icon)
     tabPage.BackgroundTransparency = 1
     tabPage.Visible = false
     tabPage.ScrollBarThickness = 4
-    tabPage.ScrollBarImageColor3 = Color3.fromRGB(100, 60, 200)
+    tabPage.ScrollBarImageColor3 = Color3.fromRGB(120, 70, 255)
     tabPage.CanvasSize = UDim2.new(0, 0, 0, 0)
     tabPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
     tabPage.Parent = ContentArea
@@ -139,20 +149,20 @@ local function CreateTab(name, icon)
     tabBtn.MouseButton1Click:Connect(function()
         for _, t in pairs(Tabs) do
             t.Page.Visible = false
-            TweenService:Create(t.Button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(25, 20, 45), TextColor3 = Color3.fromRGB(160, 140, 200)}):Play()
+            TweenService:Create(t.Button, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(28, 22, 50), TextColor3 = Color3.fromRGB(160, 140, 200)}):Play()
         end
         tabPage.Visible = true
-        TweenService:Create(tabBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(45, 30, 80), TextColor3 = Color3.fromRGB(200, 170, 255)}):Play()
+        TweenService:Create(tabBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(55, 35, 100), TextColor3 = Color3.fromRGB(210, 180, 255)}):Play()
     end)
 
     return tabPage
 end
 
--- === КОМПОНЕНТЫ ===
+--// КОМПОНЕНТЫ
 local function CreateToggle(parent, text, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, 0, 0, 36)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 18, 35)
+    frame.BackgroundColor3 = Color3.fromRGB(22, 18, 38)
     frame.Parent = parent
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
@@ -186,8 +196,8 @@ local function CreateToggle(parent, text, callback)
     toggleBtn.MouseButton1Click:Connect(function()
         state = not state
         if state then
-            TweenService:Create(toggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 50, 180)}):Play()
-            TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0, 25, 0.5, -8), BackgroundColor3 = Color3.fromRGB(180, 140, 255)}):Play()
+            TweenService:Create(toggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 60, 220)}):Play()
+            TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0, 25, 0.5, -8), BackgroundColor3 = Color3.fromRGB(200, 160, 255)}):Play()
         else
             TweenService:Create(toggleBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 40, 70)}):Play()
             TweenService:Create(circle, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -8), BackgroundColor3 = Color3.fromRGB(120, 120, 150)}):Play()
@@ -199,7 +209,7 @@ end
 local function CreateButton(parent, text, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = Color3.fromRGB(35, 28, 60)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 32, 70)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(200, 180, 255)
     btn.TextSize = 13
@@ -208,18 +218,18 @@ local function CreateButton(parent, text, callback)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 
     btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(55, 40, 100)}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(65, 50, 120)}):Play()
     end)
     btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 28, 60)}):Play()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(40, 32, 70)}):Play()
     end)
     btn.MouseButton1Click:Connect(callback)
 end
 
--- === ВКЛАДКА FARM ===
+--// ВКЛАДКА FARM (КАЧ)
 local FarmTab = CreateTab("Farm", "💪")
 
-CreateToggle(FarmTab, "AutoFarm (Strength)", function(v)
+CreateToggle(FarmTab, "AutoFarm (Strength + Punch)", function(v)
     _G.Kydiabroso.AutoFarm = v
     if v then
         task.spawn(function()
@@ -236,7 +246,7 @@ CreateToggle(FarmTab, "AutoFarm (Strength)", function(v)
     end
 end)
 
-CreateToggle(FarmTab, "AutoRebirth", function(v)
+CreateToggle(FarmTab, "AutoRebirth (Перерождение)", function(v)
     _G.Kydiabroso.AutoRebirth = v
     if v then
         task.spawn(function()
@@ -252,89 +262,44 @@ CreateToggle(FarmTab, "AutoRebirth", function(v)
     end
 end)
 
-CreateToggle(FarmTab, "AutoProtein", function(v)
-    _G.Kydiabroso.AutoProtein = v
+--// ВКЛАДКА CRYSTALS (КРИСТАЛЛЫ)
+local CrystalTab = CreateTab("Crystals", "💎")
+
+-- Выбор кристалла
+local selectedCrystal = "Blue Crystal"
+local crystalsList = {
+    "Blue Crystal", "Green Crystal", "Frost Crystal", "Inferno Crystal",
+    "Mythical Crystal", "Legends Crystal", "Muscle Elite Crystal",
+    "Galaxy Oracle Crystal"
+}
+
+local crystalDropdown = Instance.new("TextButton")
+crystalDropdown.Size = UDim2.new(1, 0, 0, 34)
+crystalDropdown.BackgroundColor3 = Color3.fromRGB(40, 32, 70)
+crystalDropdown.Text = "💎 Выбрать: Blue Crystal ▾"
+crystalDropdown.TextColor3 = Color3.fromRGB(200, 180, 255)
+crystalDropdown.TextSize = 13
+crystalDropdown.Font = Enum.Font.GothamMedium
+crystalDropdown.Parent = CrystalTab
+Instance.new("UICorner", crystalDropdown).CornerRadius = UDim.new(0, 6)
+
+local crystalIndex = 1
+crystalDropdown.MouseButton1Click:Connect(function()
+    crystalIndex = crystalIndex % #crystalsList + 1
+    selectedCrystal = crystalsList[crystalIndex]
+    _G.Kydiabroso.CrystalName = selectedCrystal
+    crystalDropdown.Text = "💎 Выбрать: " .. selectedCrystal .. " ▾"
 end)
 
-CreateToggle(FarmTab, "AutoWeight", function(v)
-    _G.Kydiabroso.AutoWeight = v
-end)
-
--- === ВКЛАДКА COMBAT ===
-local CombatTab = CreateTab("Combat", "⚔️")
-
-CreateToggle(CombatTab, "KillAura", function(v)
-    _G.Kydiabroso.KillAura = v
-    if v then
-        task.spawn(function()
-            while _G.Kydiabroso.KillAura do
-                pcall(function()
-                    local myHrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-                    if myHrp and MuscleEvent then
-                        for _, plr in pairs(Players:GetPlayers()) do
-                            if plr ~= LP and plr.Character then
-                                local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                                if hrp and (myHrp.Position - hrp.Position).Magnitude < 30 then
-                                    MuscleEvent:FireServer("punch", "rightHand")
-                                end
-                            end
-                        end
-                    end
-                end)
-                task.wait(0.1)
-            end
-        end)
-    end
-end)
-
-CreateToggle(CombatTab, "AutoPunch", function(v)
-    _G.Kydiabroso.AutoPunch = v
-    if v then
-        task.spawn(function()
-            while _G.Kydiabroso.AutoPunch do
-                pcall(function()
-                    if MuscleEvent then
-                        MuscleEvent:FireServer("punch", "leftHand")
-                        MuscleEvent:FireServer("punch", "rightHand")
-                    end
-                end)
-                task.wait(0.05)
-            end
-        end)
-    end
-end)
-
--- === ВКЛАДКА GIFT ===
-local GiftTab = CreateTab("Gift", "🎁")
-
-CreateToggle(GiftTab, "AutoClaimGifts", function(v)
-    _G.Kydiabroso.AutoGift = v
-    if v then
-        task.spawn(function()
-            while _G.Kydiabroso.AutoGift do
-                pcall(function()
-                    if rEvents then
-                        for _, remote in pairs(rEvents:GetChildren()) do
-                            if remote:IsA("RemoteEvent") and (remote.Name:lower():find("gift") or remote.Name:lower():find("claim")) then
-                                remote:FireServer()
-                            end
-                        end
-                    end
-                end)
-                task.wait(1)
-            end
-        end)
-    end
-end)
-
-CreateToggle(GiftTab, "AutoBuyCrystals (Blue)", function(v)
+CreateToggle(CrystalTab, "Auto Open Selected Crystal", function(v)
     _G.Kydiabroso.AutoCrystals = v
     if v then
         task.spawn(function()
             while _G.Kydiabroso.AutoCrystals do
                 pcall(function()
                     if rEvents and rEvents:FindFirstChild("openCrystalRemote") then
-                        rEvents.openCrystalRemote:InvokeServer("openCrystalRequest", "Blue Crystal")
+                        -- Вызов с выбранным кристаллом
+                        rEvents.openCrystalRemote:InvokeServer("openCrystalRequest", _G.Kydiabroso.CrystalName)
                     end
                 end)
                 task.wait(1)
@@ -343,10 +308,10 @@ CreateToggle(GiftTab, "AutoBuyCrystals (Blue)", function(v)
     end
 end)
 
--- === ВКЛАДКА SETTINGS ===
+--// ВКЛАДКА SETTINGS
 local SettingsTab = CreateTab("Settings", "⚙️")
 
-CreateButton(SettingsTab, "Сохранить конфиг", function()
+CreateButton(SettingsTab, "💾 Сохранить конфиг", function()
     if writefile then
         local data = {}
         for k, v in pairs(_G.Kydiabroso) do data[k] = v end
@@ -355,7 +320,7 @@ CreateButton(SettingsTab, "Сохранить конфиг", function()
     end
 end)
 
-CreateButton(SettingsTab, "Загрузить конфиг", function()
+CreateButton(SettingsTab, "📂 Загрузить конфиг", function()
     if readfile and isfile and isfile("KydiabrosoConfig.json") then
         local ok, data = pcall(function() return game:GetService("HttpService"):JSONDecode(readfile("KydiabrosoConfig.json")) end)
         if ok and data then
@@ -365,26 +330,26 @@ CreateButton(SettingsTab, "Загрузить конфиг", function()
     end
 end)
 
-CreateButton(SettingsTab, "Скрыть интерфейс", function()
+CreateButton(SettingsTab, "👁 Скрыть интерфейс", function()
     MainFrame.Visible = not MainFrame.Visible
 end)
 
-CreateButton(SettingsTab, "Выход", function()
+CreateButton(SettingsTab, "🚪 Выход", function()
     ScreenGui:Destroy()
 end)
 
--- === АКТИВАЦИЯ ПЕРВОЙ ВКЛАДКИ ===
+--// АКТИВАЦИЯ ПЕРВОЙ ВКЛАДКИ
 FarmTab.Visible = true
 if Tabs[1] then
-    Tabs[1].Button.BackgroundColor3 = Color3.fromRGB(45, 30, 80)
-    Tabs[1].Button.TextColor3 = Color3.fromRGB(200, 170, 255)
+    Tabs[1].Button.BackgroundColor3 = Color3.fromRGB(55, 35, 100)
+    Tabs[1].Button.TextColor3 = Color3.fromRGB(210, 180, 255)
 end
 
--- === МИНИ-ИКОНКА ===
+--// МИНИ-ИКОНКА (СВЁРНУТОЕ СОСТОЯНИЕ)
 local MiniFrame = Instance.new("Frame")
-MiniFrame.Size = UDim2.new(0, 120, 0, 36)
+MiniFrame.Size = UDim2.new(0, 130, 0, 36)
 MiniFrame.Position = UDim2.new(0, 10, 0, 10)
-MiniFrame.BackgroundColor3 = Color3.fromRGB(20, 15, 40)
+MiniFrame.BackgroundColor3 = Color3.fromRGB(22, 15, 45)
 MiniFrame.Visible = false
 MiniFrame.Active = true
 MiniFrame.Draggable = true
@@ -416,8 +381,9 @@ CloseBtn.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
+--// ФИНАЛЬНЫЙ ВЫВОД
 print("═══════════════════════════════════════════════════")
-print("  ✅ KYDIABROSO HUB успешно загружен!")
-print("  🎮 Игра: Muscle Legends")
-print("  📌 Вкладки: Farm, Combat, Gift, Settings")
+print("  ✅ KYDIABROSO HUB v10.0 загружен!")
+print("  💪 AutoFarm + AutoRebirth + AutoCrystals")
+print("  💎 Выбор кристалла: " .. _G.Kydiabroso.CrystalName)
 print("═══════════════════════════════════════════════════")
